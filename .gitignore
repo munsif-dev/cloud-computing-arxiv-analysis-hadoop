@@ -11,8 +11,9 @@ Thumbs.db
 .env
 .env.*
 
-# Large local datasets and archives
-data/
+# Large local datasets and archives (keep data/sample data/ tracked)
+data/arxiv/
+data/arxiv.zip
 *.tar.gz
 *.zip
 
