@@ -1,0 +1,40 @@
+# OS and editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.claude/
+
+# Secrets and local environments
+.kaggle/
+.venv/
+.env
+.env.*
+
+# Large local datasets and archives
+data/
+*.tar.gz
+*.zip
+
+# Local Hadoop distribution unpacked for setup
+hadoop-3.3.6/
+
+# Maven build output
+target/
+**/target/
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+
+# Generated reports and outputs that can be rebuilt
+arxiv-analysis/report/report.pdf
+
+# Hadoop runtime logs and pid files if created in the repo
+logs/
+*.pid
+*.out.*

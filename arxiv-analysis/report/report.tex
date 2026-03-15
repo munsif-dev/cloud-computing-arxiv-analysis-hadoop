@@ -1,0 +1,93 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=0.65in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{parskip}
+\setlist[itemize]{leftmargin=1.2em, itemsep=2pt, topsep=2pt}
+\setlength{\parskip}{3pt}
+\setlength{\parindent}{0pt}
+\pagestyle{plain}
+
+\title{\textbf{ArXiv Research Field Activity Analysis Using Hadoop MapReduce}}
+\author{Munsif Ahamed \\ EE7222/EC7204 Cloud Computing}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{1. Objective}
+This project analyzes the ArXiv metadata snapshot using Hadoop MapReduce in a pseudo-distributed single-node environment. For each research category, the job computes total paper count, average version count, average abstract length, and average author count. The dataset is suitable for MapReduce because each paper can belong to multiple categories, creating a natural many-to-many aggregation task.
+
+\section*{2. Dataset and Environment}
+The input dataset is the Cornell University ArXiv metadata snapshot downloaded from Kaggle. It was stored in HDFS under \texttt{/user/hadoop/arxiv/input} as JSON Lines, where each line contains one paper record. The implementation ran in WSL2 using Java 11, Hadoop 3.3.6, HDFS, YARN, and Maven. The final successful run used one reducer and 39 map splits.
+
+\section*{3. MapReduce Design}
+The mapper reads one JSON object per line and extracts:
+\begin{itemize}
+  \item category codes from the \texttt{categories} field,
+  \item the number of versions from the \texttt{versions} array,
+  \item abstract word count from the \texttt{abstract} field,
+  \item author count from the \texttt{authors\_parsed} array.
+\end{itemize}
+
+For every category assigned to a paper, the mapper emits a tuple of the form
+\texttt{(1, versionCount, abstractWords, authorCount)}. This design allows one paper to contribute to multiple fields such as \texttt{cs.LG} and \texttt{cs.AI}.
+
+The reducer aggregates these raw counts per category and computes:
+\[
+\text{avgVersions}=\frac{\sum versions}{totalPapers}, \quad
+\text{avgAbstractWords}=\frac{\sum abstractWords}{totalPapers}, \quad
+\text{avgAuthors}=\frac{\sum authors}{totalPapers}.
+\]
+
+One important issue appeared during testing: the reducer had initially been reused as a combiner even though it emitted formatted final output instead of raw additive tuples. This caused parse errors and empty results. Removing the combiner resolved the problem.
+
+\section*{4. Execution Summary}
+The final successful YARN run completed in approximately 2 minutes and 11 seconds. Key counters were:
+\begin{itemize}
+  \item map input records: 2,975,294,
+  \item launched map tasks: 39,
+  \item launched reduce tasks: 1,
+  \item HDFS bytes read: 5,142,915,425,
+  \item total categories in final output: 176.
+\end{itemize}
+
+The generated output file \texttt{part-r-00000} contains one summarized record per ArXiv category. A sample is shown in Table~\ref{tab:sample}.
+
+\begin{table}[h]
+\centering
+\caption{Selected Output Categories from the Final Job Run}
+\label{tab:sample}
+\small
+\begin{tabularx}{\linewidth}{@{}lrrrr@{}}
+\toprule
+Category & Total Papers & Avg Versions & Avg Words & Avg Authors \\
+\midrule
+\texttt{cs.LG} & 256,056 & 1.70 & 172 & 4.4 \\
+\texttt{cs.CV} & 183,697 & 1.60 & 177 & 5.1 \\
+\texttt{cs.AI} & 165,832 & 1.60 & 173 & 4.9 \\
+\texttt{astro-ph} & 105,380 & 1.35 & 163 & 4.1 \\
+\texttt{cond-mat.mtrl-sci} & 106,881 & 1.39 & 150 & 5.5 \\
+\texttt{hep-ph} & 194,235 & 1.71 & 124 & 3.7 \\
+\texttt{hep-th} & 180,439 & 1.86 & 121 & 2.4 \\
+\texttt{quant-ph} & 175,287 & 1.72 & 135 & 3.6 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section*{5. Interpretation of Results}
+The output highlights clear differences between research communities. Machine learning categories such as \texttt{cs.LG}, \texttt{cs.CV}, and \texttt{cs.AI} are among the largest on ArXiv. Physics categories such as \texttt{hep-ph}, \texttt{hep-th}, and \texttt{quant-ph} are also very large, showing that ArXiv remains broadly multi-disciplinary.
+
+The author-count metric reflects collaboration intensity. Experimental physics-oriented categories have much larger author counts than mathematics or theoretical computer science categories. Version counts are also informative: some economics and mathematics categories show the highest revision averages, suggesting longer update cycles before stabilization. Overall, the metrics capture publication volume, revision behavior, abstract complexity, and collaboration style in one distributed analysis.
+
+\section*{6. Conclusion}
+The project successfully demonstrated a complete Hadoop workflow: HDFS storage, YARN execution, Maven-based packaging, and category-level aggregation over a multi-million-record scholarly dataset. The final job produced 176 category summaries and exposed practical distributed-systems issues such as YARN configuration, classpath propagation, and safe combiner design. After resolving these issues, the application generated correct output suitable for assignment evidence.
+
+\end{document}

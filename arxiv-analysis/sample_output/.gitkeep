@@ -1,0 +1,2 @@
+# After running the job, copy part-r-00000 here:
+#   hdfs dfs -get /user/hadoop/arxiv/output/part-r-00000 ./sample_output/

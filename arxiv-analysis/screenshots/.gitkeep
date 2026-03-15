@@ -1,0 +1,5 @@
+# Place your evidence screenshots here:
+#   hadoop_install.png   — output of: jps  (showing 5 daemons)
+#   hdfs_ui.png          — HDFS web UI at http://localhost:9870
+#   yarn_ui.png          — YARN web UI at http://localhost:8088  (job running)
+#   job_output.png       — terminal showing final output
